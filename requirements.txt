@@ -1,0 +1,11 @@
+torch==2.4.1
+torchvision==0.19.1
+flwr==1.8.0
+grpcio==1.69.0
+protobuf==4.25.2
+python-dotenv==1.0.1
+scikit-learn
+black
+tqdm==4.67.1
+numpy
+pandas
