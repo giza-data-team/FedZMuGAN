@@ -8,8 +8,10 @@ class Net(BaseModel):
     def __init__(self):
         super(Net, self).__init__()
         input_channels = self.dataset_config["img_channels"]
-        input_size = self.dataset_config.get("img_size", 28)  # Default to 28 if not specified
-        
+        input_size = self.dataset_config.get(
+            "img_size", 28
+        )  # Default to 28 if not specified
+
         self.conv1 = nn.Conv2d(
             input_channels, 32, kernel_size=3, padding=1
         )  # Increased filters

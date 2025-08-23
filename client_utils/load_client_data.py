@@ -10,7 +10,9 @@ logger.setLevel(logging.INFO)
 
 
 class LoadClientData:
-    def __init__(self, client_id,device='cpu', dataset_name="MNIST", data_path="client_data"):
+    def __init__(
+        self, client_id, device="cpu", dataset_name="MNIST", data_path="client_data"
+    ):
         self.client_id = client_id
         self.dataset_name = dataset_name.lower()
         self.data_path = data_path
@@ -84,8 +86,8 @@ class LoadClientData:
         # DataLoader params
         loader_args = {
             "batch_size": batch_size,
-            "num_workers": 4,         # Use multiple workers for speed (adjust to your CPU)
-            "pin_memory": True,       # Faster transfer to CUDA
+            "num_workers": 4,  # Use multiple workers for speed (adjust to your CPU)
+            "pin_memory": True,  # Faster transfer to CUDA
         }
 
         train_loader = DataLoader(train_subset, shuffle=True, **loader_args)
@@ -96,7 +98,6 @@ class LoadClientData:
             f"Efficient DataLoaders loaded for client {self.client_id} with batch size {batch_size}"
         )
         return train_loader, val_loader, test_loader
-
 
     def _split_subset_by_class(self, subset):
         """

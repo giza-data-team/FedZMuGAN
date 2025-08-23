@@ -32,7 +32,7 @@ class DataSplitter:
         self.config = ConfigurationManager()
         self.random_state = self.config.get_seed()
 
-    def _split_data_homogeneous(self, data, targets,length_check=True):
+    def _split_data_homogeneous(self, data, targets, length_check=True):
         """
         Split data homogeneously with guaranteed equal splits
         """
@@ -56,7 +56,7 @@ class DataSplitter:
 
         return client_datasets
 
-    def _split_data_heterogeneous(self, data, targets,length_check=True):
+    def _split_data_heterogeneous(self, data, targets, length_check=True):
         """
         Split the dataset heterogeneously, ensuring that all clients receive instances
         from all target classes, the total data size matches the original dataset size,
@@ -129,20 +129,30 @@ class DataSplitter:
     def _load_combined_mnist_data(self):
         # Load train and test data from MNIST
         train_dataset = datasets.MNIST(
-            root="./data", train=True, download=True, transform=transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize((0.1307,), (0.3081,)),  # Mean and std for MNIST
-            ]
-        )
+            root="./data",
+            train=True,
+            download=True,
+            transform=transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        (0.1307,), (0.3081,)
+                    ),  # Mean and std for MNIST
+                ]
+            ),
         )
         test_dataset = datasets.MNIST(
-            root="./data", train=False, download=True, transform=transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize((0.1307,), (0.3081,)),  # Mean and std for MNIST
-            ]
-        )
+            root="./data",
+            train=False,
+            download=True,
+            transform=transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        (0.1307,), (0.3081,)
+                    ),  # Mean and std for MNIST
+                ]
+            ),
         )
 
         # Combine train and test data
@@ -167,11 +177,17 @@ class DataSplitter:
         train_dataset = self.dataset_loader.get_train_dataset()
         test_dataset = self.dataset_loader.get_test_dataset()
         # Convert train and test datasets to tensors
-        train_data = torch.stack([train_dataset[i][0] for i in range(len(train_dataset))])
-        train_targets = torch.tensor([train_dataset[i][1] for i in range(len(train_dataset))])
+        train_data = torch.stack(
+            [train_dataset[i][0] for i in range(len(train_dataset))]
+        )
+        train_targets = torch.tensor(
+            [train_dataset[i][1] for i in range(len(train_dataset))]
+        )
 
         test_data = torch.stack([test_dataset[i][0] for i in range(len(test_dataset))])
-        test_targets = torch.tensor([test_dataset[i][1] for i in range(len(test_dataset))])
+        test_targets = torch.tensor(
+            [test_dataset[i][1] for i in range(len(test_dataset))]
+        )
 
         # Concatenate train and test data
         # data = torch.cat((train_data, test_data), dim=0)
@@ -189,10 +205,14 @@ class DataSplitter:
         if self.homogeneous:
             train_splits = self._split_data_homogeneous(train_data, train_targets)
             print("start split test data")
-            test_splits = self._split_data_homogeneous(test_data, test_targets,length_check=False)
+            test_splits = self._split_data_homogeneous(
+                test_data, test_targets, length_check=False
+            )
         else:
             train_splits = self._split_data_heterogeneous(train_data, train_targets)
-            test_splits = self._split_data_heterogeneous(test_data, test_targets,length_check=False)
+            test_splits = self._split_data_heterogeneous(
+                test_data, test_targets, length_check=False
+            )
 
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
@@ -222,16 +242,24 @@ class DataSplitter:
         all_train_classes = set.union(*all_train_targets.values())
         all_test_classes = set.union(*all_test_targets.values())
 
-        missing_train_classes = set(range(len(torch.unique(train_targets)))) - all_train_classes
-        missing_test_classes = set(range(len(torch.unique(test_targets)))) - all_test_classes
+        missing_train_classes = (
+            set(range(len(torch.unique(train_targets)))) - all_train_classes
+        )
+        missing_test_classes = (
+            set(range(len(torch.unique(test_targets)))) - all_test_classes
+        )
 
         if missing_train_classes:
-            raise ValueError(f"Missing train classes in the split: {sorted(missing_train_classes)}")
+            raise ValueError(
+                f"Missing train classes in the split: {sorted(missing_train_classes)}"
+            )
         else:
             logger.info("All train classes are properly distributed across clients.")
 
         if missing_test_classes:
-            raise ValueError(f"Missing test classes in the split: {sorted(missing_test_classes)}")
+            raise ValueError(
+                f"Missing test classes in the split: {sorted(missing_test_classes)}"
+            )
         else:
             logger.info("All test classes are properly distributed across clients.")
 

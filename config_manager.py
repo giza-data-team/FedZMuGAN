@@ -36,7 +36,7 @@ class ConfigurationManager:
     # =============================
     def get_seed(self):
         return int(os.getenv("SEED", 42))
-    
+
     def get_num_gpus(self):
         return int(os.getenv("NUM_GPUS"))
 
@@ -80,7 +80,6 @@ class ConfigurationManager:
     def get_patience(self):
         return int(os.getenv("PATIENCE", 10))
 
-
     # =============================
     # Original Model Configurations
     # =============================
@@ -104,26 +103,24 @@ class ConfigurationManager:
 
     def get_dropout_rate(self):
         return float(os.getenv("DROPOUT_RATE_ORIGINAL", 0.5))
-    
+
     def get_models_path_original(self):
         return os.getenv("MODELS_PATH_ORIGINAL", "./original_model/models_weights")
-    
+
     def get_retrain(self):
         return self._str_to_bool(os.getenv("RE_TRAIN"))
-    
+
     def get_early_stopping_patience_original(self):
         return int(os.getenv("EARLY_STOPPING_PATIENCE_ORIGINAL"))
-    
+
     def get_early_stopping_min_delta_original(self):
         return float(os.getenv("EARLY_STOPPING_MIN_DELTA_ORIGINAL"))
-    
+
     def get_results_path_original(self):
         return os.getenv("RESULTS_PATH_ORIGINAL")
 
     def get_lr_original(self):
         return float(os.getenv("LR_ORIGINAL"))
-        
-
 
     # =============================
     # zMuGAN Model Configurations
@@ -152,19 +149,17 @@ class ConfigurationManager:
     def get_epochs_zmugan(self):
         return int(os.getenv("EPOCHS_ZMUGAN", 4))
 
-
     def get_output_path_zmugan(self):
         return os.getenv("OUTPUT_PATH_ZMUGAN", "./zMuGAN/output")
-    
+
     def get_n_generators_zmugan(self):
         return int(os.getenv("N_GENERATORS"))
-    
+
     def get_early_stopping_patience_zmugan(self):
         return int(os.getenv("EARLY_STOPPING_PATIENCE_ZMUGAN"))
-    
+
     def get_early_stopping_min_delta_zmugan(self):
         return float(os.getenv("EARLY_STOPPING_MIN_DELTA_ZMUGAN"))
-
 
     # =============================
     # Unlearning Configurations
@@ -192,42 +187,40 @@ class ConfigurationManager:
 
     def get_models_path_unlearn(self):
         return os.getenv("MODELS_PATH_UNLEARN", "./Unlearning/unlearned_models_weights")
-    
+
     def get_lr_ain(self):
         return float(os.getenv("LR_AIN"))
-    
+
     def get_batch_size_ain(self):
         return int(os.getenv("BATCH_SIZE_AIN"))
-    
-    
+
     def get_scratch_models_path_unlearn(self):
         return os.getenv("SCRATCH_MODELS_PATH_UNLEARN")
-    
+
     def get_max_epochs_unlearn_eval(self):
         return int(os.getenv("MAX_EPOCHS_UNLEARN_EVAL"))
-    
+
     def get_results_path_unlearn(self):
         return os.getenv("RESULTS_PATH_UNLEARN")
-    
+
     def get_results_path_unlearn_eval(self):
         return os.getenv("RESULTS_PATH_UNLEARN_EVAL")
-    
+
     def get_unlearning_method(self):
         return os.getenv("UNLEARNING_METHOD", "zmugan")
-    
+
     def get_lr_lipschitz(self):
         return float(os.getenv("LR_LIPSCHITZ", 0.001))
-    
+
     def get_noise_std_lipschitz(self):
         return float(os.getenv("NOISE_STD_LIPSCHITZ", 0.1))
 
     # =============================
     # Grouped Configurations (Optional)
     # =============================
-    
+
     def get_re_train(self):
         return int(os.getenv("RE_TRAIN", 0))
-
 
     def get_all_general_configs(self):
         return {
@@ -279,7 +272,7 @@ class ConfigurationManager:
             "EARLY_STOPPING_PATIENCE_ZMUGAN": self.get_early_stopping_patience_zmugan(),
             "EARLY_STOPPING_MIN_DELTA_ZMUGAN": self.get_early_stopping_min_delta_zmugan(),
             "OUTPUT_PATH_ZMUGAN": self.get_output_path_zmugan(),
-            "N_GENERATORS": self.get_n_generators_zmugan()
+            "N_GENERATORS": self.get_n_generators_zmugan(),
         }
 
     def get_all_unlearning_configs(self):
@@ -316,7 +309,7 @@ class ConfigurationManager:
             "num_classes": self.get_num_classes(),
             "dropout_rate": self.get_dropout_rate(),
         }
-    
+
     def get_dataset_configs(self):
         return {
             "IMAGE_SIZE": self.get_image_size(),
@@ -326,8 +319,9 @@ class ConfigurationManager:
             "DATASET_NAME": self.get_dataset_name(),
             "DATASET_PATH": self.get_dataset_path(),
         }
-    
+
         ## Unlearning Parameters
+
     def get_unlearning_configs(self):
         return {
             "FORGET_CLASS": self.get_forget_class(),
@@ -340,5 +334,5 @@ class ConfigurationManager:
             "LR_AIN": self.get_lr_ain(),
             "BATCH_SIZE_AIN": self.get_batch_size_ain(),
             "RESULTS_PATH_UNLEARN": self.get_results_path_unlearn(),
-            "RESULTS_PATH_UNLEARN_EVAL": self.get_results_path_unlearn_eval()
+            "RESULTS_PATH_UNLEARN_EVAL": self.get_results_path_unlearn_eval(),
         }

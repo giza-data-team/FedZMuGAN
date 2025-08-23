@@ -55,18 +55,19 @@ experiment_info = {
     "type": "Run file",
 }
 
+
 def client_fn(context: Context) -> fl.client.Client:
     """Create a Flower client representing a single organization."""
-    
+
     # Get client-specific parameters from context
     partition_id = context.node_config["partition-id"]
-    
+
     # Get configuration
     target_class = config_manager.get_forget_class()
     n_epochs = config_manager.get_epochs_original()
     homogeneous = config_manager.get_homogeneous()
     lr = config_manager.get_lr_original()
-    
+
     # Create and return client
     return FlowerClient(
         target_class=target_class,
@@ -76,13 +77,14 @@ def client_fn(context: Context) -> fl.client.Client:
         lr=lr,
     )
 
+
 def server_fn(context: Context) -> fl.server.ServerAppComponents:
     """Create server components."""
-    
+
     # Get configuration
     n_rounds = config_manager.get_n_rounds()
     model_name = config_manager.get_model_name()
-    
+
     # Create strategy
     strategy = CustomStrategy(
         min_fit_clients=n_clients,
@@ -92,14 +94,15 @@ def server_fn(context: Context) -> fl.server.ServerAppComponents:
         dataset_name=dataset_name,
         model_name=model_name,
     )
-    
+
     # Create server config
     config = fl.server.ServerConfig(num_rounds=n_rounds)
-    
+
     return fl.server.ServerAppComponents(
         strategy=strategy,
         config=config,
     )
+
 
 try:
     # data_splitter = DataSplitter(
@@ -111,18 +114,18 @@ try:
     # data_splitter.generate_and_split_data()
 
     logger.info("Starting Flower simulation...")
-    
+
     # Create ClientApp and ServerApp
     client_app = fl.client.ClientApp(client_fn=client_fn)
     server_app = fl.server.ServerApp(server_fn=server_fn)
-    
+
     # Specify the resources each client needs
     backend_config = {"client_resources": {"num_cpus": 1, "num_gpus": 0.0}}
-    
+
     # If CUDA is available, allocate GPU resources
     if torch.cuda.is_available():
         backend_config = {"client_resources": {"num_cpus": 1, "num_gpus": 1.0}}
-    
+
     # Run the simulation
     run_simulation(
         server_app=server_app,
@@ -130,7 +133,7 @@ try:
         num_supernodes=n_clients,
         backend_config=backend_config,
     )
-    
+
     logger.info("Simulation completed successfully!")
 
 except Exception as e:

@@ -1,4 +1,3 @@
-
 from dotenv import load_dotenv
 from client_utils.general_utils import set_seed
 
@@ -27,17 +26,19 @@ class ZMuGANTrainer:
         self.cls_network = self._load_pretrained_model()
         self.gen_network, self.dec_network = self._initialize_networks()
 
-        weights_path = os.path.join(self.zmugan_configs["OUTPUT_PATH_ZMUGAN"], "model_weights")
+        weights_path = os.path.join(
+            self.zmugan_configs["OUTPUT_PATH_ZMUGAN"], "model_weights"
+        )
         images_path = os.path.join(self.zmugan_configs["OUTPUT_PATH_ZMUGAN"], "samples")
 
         os.makedirs(weights_path, exist_ok=True)
         os.makedirs(images_path, exist_ok=True)
-        
+
         # If a generator_index is provided, append it to the file names to avoid overwriting.
         idx_suffix = f"_{generator_index}" if generator_index is not None else ""
         self.final_model_path = os.path.join(
-            weights_path, 
-            f"generator_{self.model_name}_{self.dataset_configs['DATASET_NAME']}{idx_suffix}.pth"
+            weights_path,
+            f"generator_{self.model_name}_{self.dataset_configs['DATASET_NAME']}{idx_suffix}.pth",
         )
 
     def _load_configurations(self):
@@ -51,11 +52,13 @@ class ZMuGANTrainer:
     def _load_pretrained_model(self):
         print("\n=== Loading pre-trained model ===")
         original_model_path = os.path.join(
-            self.original_model_dir, 
-            f"{self.model_name}_{self.dataset_configs['DATASET_NAME']}.pth"
+            self.original_model_dir,
+            f"{self.model_name}_{self.dataset_configs['DATASET_NAME']}.pth",
         )
-        
-        cls_network = self.weight_controller.load_model(original_model_path, self.device)
+
+        cls_network = self.weight_controller.load_model(
+            original_model_path, self.device
+        )
         return cls_network
 
     def _initialize_networks(self):
@@ -64,12 +67,14 @@ class ZMuGANTrainer:
             self.num_classes, self.img_channels, self.zmugan_configs["NOISE_DIM_ZMUGAN"]
         ).to(self.device)
         in_features = (
-            self.dataset_configs["IMAGE_SIZE"] * self.dataset_configs["IMAGE_SIZE"] * self.img_channels
+            self.dataset_configs["IMAGE_SIZE"]
+            * self.dataset_configs["IMAGE_SIZE"]
+            * self.img_channels
         )  # Flattened image size
         dec_network = Decoder(
-            in_features, 
-            self.zmugan_configs["NOISE_DIM_ZMUGAN"], 
-            self.zmugan_configs["DECODER_LAYERS_ZMUGAN"]
+            in_features,
+            self.zmugan_configs["NOISE_DIM_ZMUGAN"],
+            self.zmugan_configs["DECODER_LAYERS_ZMUGAN"],
         ).to(self.device)
         return gen_network, dec_network
 
@@ -89,10 +94,10 @@ class ZMuGANTrainer:
             self.zmugan_configs["EARLY_STOPPING_MIN_DELTA_ZMUGAN"],
             self.device,
             self.zmugan_configs["OUTPUT_PATH_ZMUGAN"],
-            self.model_name, 
+            self.model_name,
             self.dataset_configs["DATASET_NAME"],
             self.final_model_path,
-            generator_index=generator_index
+            generator_index=generator_index,
         )
 
     def run(self, generator_index=None):
@@ -106,5 +111,5 @@ if __name__ == "__main__":
     n = config.get_n_generators_zmugan()
     for i in range(n):
         print(f"\n********** Training Generator {i+1} of {n} **********")
-        trainer = ZMuGANTrainer(generator_index=i+1)
-        trainer.run(generator_index=i+1)
+        trainer = ZMuGANTrainer(generator_index=i + 1)
+        trainer.run(generator_index=i + 1)

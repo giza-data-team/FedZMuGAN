@@ -58,7 +58,6 @@ class FlowerClient(fl.client.Client):
             val_loader=self.val_loader,
             device=self.device,
         )
-        
 
         self.weight_controller = WeightsController()
         self.homogeneous = homogeneous
@@ -103,15 +102,12 @@ class FlowerClient(fl.client.Client):
             device=self.device,
         )
         self.validate_data_original = ValidateData(
-            validateloader=self.test_loaders,
-            device=self.device
+            validateloader=self.test_loaders, device=self.device
         )
-        
+
         self.validate_data_scratch = ValidateData(
-            validateloader=self.retain_test_loader,
-            device=self.device
+            validateloader=self.retain_test_loader, device=self.device
         )
-       
 
     def fit(self, parameters):
         configs = parameters.config
@@ -119,20 +115,24 @@ class FlowerClient(fl.client.Client):
         unlearning_method = configs["unlearning_method"]
 
         if self.training_status == "unlearning":
-            print(f"\n===== Processing unlearning phase with {unlearning_method.upper()} =====")
+            print(
+                f"\n===== Processing unlearning phase with {unlearning_method.upper()} ====="
+            )
             weights = parameters_to_ndarrays(parameters.parameters)
             if weights:
                 self.weight_controller.set_weights(self.net, weights)
 
             # Handle different unlearning methods
             if unlearning_method == "lipschitz":
-                print(f"\n===== Client {self.client_id} performing Lipschitz unlearning =====")
+                print(
+                    f"\n===== Client {self.client_id} performing Lipschitz unlearning ====="
+                )
                 start_time = datetime.now()
- 
+
                 # Get lipschitz parameters from config
-                lipschitz_lr = self.config_manager.get_lr_lipschitz() 
-                lipschitz_noise_std = self.config_manager.get_noise_std_lipschitz() 
-                
+                lipschitz_lr = self.config_manager.get_lr_lipschitz()
+                lipschitz_noise_std = self.config_manager.get_noise_std_lipschitz()
+
                 # Perform lipschitz unlearning
                 lipschitz_unlearner = LipschitzUnlearning(
                     model=self.net,
@@ -140,32 +140,39 @@ class FlowerClient(fl.client.Client):
                     forget_dataloader=self.forget_train_loader,
                     opt_func=torch.optim.Adam,
                     learning_rate=lipschitz_lr,
-                    noise_std=lipschitz_noise_std
+                    noise_std=lipschitz_noise_std,
                 )
-                
+
                 # Perform unlearning
                 unlearned_model = lipschitz_unlearner.lipschitz_unlearn()
-                
+
                 end_time = datetime.now()
                 time_difference = abs(end_time - start_time)
                 time_difference_in_seconds = time_difference.total_seconds()
-                
-                print(f"Client {self.client_id} completed Lipschitz unlearning in {time_difference_in_seconds:.2f} seconds")
-                
+
+                print(
+                    f"Client {self.client_id} completed Lipschitz unlearning in {time_difference_in_seconds:.2f} seconds"
+                )
+
                 # Return the unlearned model parameters
-                unlearned_parameters = ndarrays_to_parameters([
-                    param.cpu().numpy() for param in unlearned_model.state_dict().values()
-                ])
-                
+                unlearned_parameters = ndarrays_to_parameters(
+                    [
+                        param.cpu().numpy()
+                        for param in unlearned_model.state_dict().values()
+                    ]
+                )
+
                 return FitRes(
                     parameters=unlearned_parameters,
                     num_examples=len(self.forget_train_loader.dataset),
                     metrics={
                         "status": f"{unlearning_method}_unlearning_completed",
                         "unlearning_time": time_difference_in_seconds,
-                        "client_id": self.client_id
+                        "client_id": self.client_id,
                     },
-                    status=Status(code=fl.common.Code.OK, message="Lipschitz unlearning completed"),
+                    status=Status(
+                        code=fl.common.Code.OK, message="Lipschitz unlearning completed"
+                    ),
                 )
             else:
                 # For both zMuGAN and EMMN, unlearning is now done on server side
@@ -184,7 +191,10 @@ class FlowerClient(fl.client.Client):
         # Handle scratch training
         print(f"\n============= training_status:{self.training_status} ===========")
 
-        if self.training_status == "scratch_training" or self.training_status == "learning" :
+        if (
+            self.training_status == "scratch_training"
+            or self.training_status == "learning"
+        ):
             print(f"\n ====== client {self.client_id} starts {self.training_status}")
             start_time = datetime.now()
             parameters = parameters.parameters
@@ -194,13 +204,19 @@ class FlowerClient(fl.client.Client):
 
             status = fl.common.Status(code=fl.common.Code.OK, message="Success")
             if self.training_status == "scratch_training":
-                train_loss, train_accuracy, val_loss, val_accuracy = (
-                    self.model_trainer_scratch.train(self.net)
-                )
+                (
+                    train_loss,
+                    train_accuracy,
+                    val_loss,
+                    val_accuracy,
+                ) = self.model_trainer_scratch.train(self.net)
             else:
-                train_loss, train_accuracy, val_loss, val_accuracy = (
-                    self.model_trainer_original.train(self.net)
-                )
+                (
+                    train_loss,
+                    train_accuracy,
+                    val_loss,
+                    val_accuracy,
+                ) = self.model_trainer_original.train(self.net)
 
             metrics = {}
             metrics["train_loss"] = train_loss
@@ -232,7 +248,9 @@ class FlowerClient(fl.client.Client):
 
             return FitRes(
                 parameters=parameters,
-                num_examples=len(self.retain_train_loader.dataset) if self.training_status == "scratch_training" else len(self.train_loader.dataset),
+                num_examples=len(self.retain_train_loader.dataset)
+                if self.training_status == "scratch_training"
+                else len(self.train_loader.dataset),
                 metrics=metrics,
                 status=status,
             )
@@ -244,8 +262,10 @@ class FlowerClient(fl.client.Client):
         unlearning_method = configs["unlearning_method"]
         metrics = {}
         # Handle scratch evaluation
-        if self.training_status == "unlearning" :
-            print(f"\n ====== client {self.client_id} evaluates {unlearning_method.upper()} unlearning")
+        if self.training_status == "unlearning":
+            print(
+                f"\n ====== client {self.client_id} evaluates {unlearning_method.upper()} unlearning"
+            )
             start_time = datetime.now()
             weights = parameters.parameters
             weights = parameters_to_ndarrays(parameters=weights)
@@ -257,20 +277,20 @@ class FlowerClient(fl.client.Client):
 
             # Get the correct unlearned model path based on unlearning method
             unlearned_model_path = os.path.join(
-            self.config_manager.get_models_path_unlearn(),
-            f"unlearned_{self.model_name}_{self.dataset_name}_forget_class_{self.config_manager.get_forget_class()}_{unlearning_method}.pth",
+                self.config_manager.get_models_path_unlearn(),
+                f"unlearned_{self.model_name}_{self.dataset_name}_forget_class_{self.config_manager.get_forget_class()}_{unlearning_method}.pth",
             )
 
             # Use the same evaluation approach for all methods
             final_metrics = get_metrics(
                 original_model_path=os.path.join(
-                    self.config_manager.get_models_path_original(), 
-                    f"{str(self.model_name).lower()}_{self.dataset_name}.pth"
+                    self.config_manager.get_models_path_original(),
+                    f"{str(self.model_name).lower()}_{self.dataset_name}.pth",
                 ),
                 unlearned_model_path=unlearned_model_path,
                 scratch_model_path=os.path.join(
                     self.config_manager.get_models_path_original(),
-                    f"{str(self.model_name).lower()}_{self.dataset_name}_scratch.pth"
+                    f"{str(self.model_name).lower()}_{self.dataset_name}_scratch.pth",
                 ),
                 forget_test_loader=self.forget_test_loader,
                 retain_test_loader=self.retain_test_loader,
@@ -288,17 +308,13 @@ class FlowerClient(fl.client.Client):
                     "forget_accuracy": final_metrics["forget_acc"],
                     "retain_accuracy": final_metrics["retain_acc"],
                     "original_forget_acc": final_metrics["original_forget_acc"],
-                    "original_retain_acc": final_metrics["original_retain_acc"], 
+                    "original_retain_acc": final_metrics["original_retain_acc"],
                     "original_accuracy": final_metrics["original_accuracy"],
                 }
             )
 
-            metrics["forget_acc_num_examples"] = len(
-                self.forget_test_loader.dataset
-            )
-            metrics["retain_acc_num_examples"] = len(
-                self.retain_test_loader.dataset
-            )
+            metrics["forget_acc_num_examples"] = len(self.forget_test_loader.dataset)
+            metrics["retain_acc_num_examples"] = len(self.retain_test_loader.dataset)
             metrics["mia_num_examples"] = (
                 len(self.retain_train_loader.dataset)
                 + len(self.forget_train_loader.dataset)
@@ -331,7 +347,7 @@ class FlowerClient(fl.client.Client):
                 metrics=metrics,
                 status=status,
             )
-        
+
         else:
             print(f"\n ====== client {self.client_id} evaluats {self.training_status}")
             start_time = datetime.now()
@@ -339,12 +355,20 @@ class FlowerClient(fl.client.Client):
             weights = parameters_to_ndarrays(parameters=weights)
             if weights:
                 self.weight_controller.set_weights(self.net, weights)
-            
+
             if self.training_status == "scratch_training":
-                loss, val_metric = self.validate_data_scratch.validate(net=self.net,validateloader=self.retain_test_loader, target_class=self.target_class)
+                loss, val_metric = self.validate_data_scratch.validate(
+                    net=self.net,
+                    validateloader=self.retain_test_loader,
+                    target_class=self.target_class,
+                )
             else:
-                loss, val_metric = self.validate_data_original.validate(net=self.net,validateloader=self.test_loaders, target_class=self.target_class)
-        
+                loss, val_metric = self.validate_data_original.validate(
+                    net=self.net,
+                    validateloader=self.test_loaders,
+                    target_class=self.target_class,
+                )
+
             accuracy = val_metric["overall_accuracy"]
 
             metrics["test_loss"] = loss
@@ -363,11 +387,12 @@ class FlowerClient(fl.client.Client):
 
             return EvaluateRes(
                 loss=loss,
-                num_examples=len(self.retain_test_loader.dataset) if self.training_status == "scratch_training" else len(self.test_loaders.dataset),
+                num_examples=len(self.retain_test_loader.dataset)
+                if self.training_status == "scratch_training"
+                else len(self.test_loaders.dataset),
                 metrics=metrics,
                 status=status,
             )
-
 
 
 if __name__ == "__main__":

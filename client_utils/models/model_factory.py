@@ -1,9 +1,10 @@
 from config_manager import ConfigurationManager
-from .vgg16 import VGG16,VGG13
+from .vgg16 import VGG16, VGG13
 from .resnet import ResNet101, ResNet152, ResNet18, ResNet50
 from .mobilenet import MobileNet
 from .net import Net
 from .all_cnn import AllCNN
+
 
 class ModelFactory:
     @staticmethod

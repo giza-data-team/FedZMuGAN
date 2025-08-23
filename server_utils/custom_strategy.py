@@ -91,7 +91,7 @@ class CustomStrategy(Strategy):
         rounds: int = 5,
         dataset_name: str = "",
         homogeneous: bool = True,
-        model_name:str=None,
+        model_name: str = None,
     ) -> None:
         super().__init__()
 
@@ -116,7 +116,7 @@ class CustomStrategy(Strategy):
         self.inplace = inplace
         self.rounds = rounds
         self.best_weights = None
-        self.best_loss = float('inf')
+        self.best_loss = float("inf")
         self.last_weights = None
         self.dataset_name = dataset_name
         self.model_name = model_name
@@ -136,21 +136,25 @@ class CustomStrategy(Strategy):
         self.homogeneous = homogeneous
         self.training_status = "unlearning"
         self.unlearning_method = self.config_manager.get_unlearning_method()
-        
+
         # Lipschitz-specific tracking variables
         self.lipschitz_round = 0
-        self.best_utility_score = -float('inf')  # retain_acc + (100-forget_acc)
+        self.best_utility_score = -float("inf")  # retain_acc + (100-forget_acc)
         self.best_lipschitz_weights = None
         self.lipschitz_no_improvement_count = 0
         self.lipschitz_max_no_improvement = 3  # Stop after 3 rounds of no improvement
         self.model_path_unlearn = self.config_manager.get_models_path_unlearn()
-        self.unlearned_model_path = os.path.join(
-            self.model_path_unlearn,
-            f"unlearned_{self.model_name}_{self.dataset_name}_forget_class_{self.config_manager.get_forget_class()}.pth"
-        ) if self.unlearning_method == "zmugan" else os.path.join(
-            self.model_path_unlearn,
-            f"unlearned_{self.model_name}_{self.dataset_name}_forget_class_{self.config_manager.get_forget_class()}_{self.unlearning_method}.pth"
-        )  
+        self.unlearned_model_path = (
+            os.path.join(
+                self.model_path_unlearn,
+                f"unlearned_{self.model_name}_{self.dataset_name}_forget_class_{self.config_manager.get_forget_class()}.pth",
+            )
+            if self.unlearning_method == "zmugan"
+            else os.path.join(
+                self.model_path_unlearn,
+                f"unlearned_{self.model_name}_{self.dataset_name}_forget_class_{self.config_manager.get_forget_class()}_{self.unlearning_method}.pth",
+            )
+        )
         """Federated Averaging strategy.
     
         Implementation based on https://arxiv.org/abs/1602.05629
@@ -290,7 +294,7 @@ class CustomStrategy(Strategy):
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
     ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
         """Aggregate fit results using weighted average."""
-        
+
         self.info_tracker = {}
         self.info_tracker["dataset_name"] = self.dataset_name
         self.info_tracker["model_name"] = self.model_name
@@ -344,63 +348,69 @@ class CustomStrategy(Strategy):
                 config_manager = ConfigurationManager()
                 n_generators = config_manager.get_n_generators_zmugan()
                 for i in range(n_generators):
-                    print(f"\n********** Training Generator {i+1} of {n_generators} **********")
-                    trainer = ZMuGANTrainer(generator_index=i+1)
-                    trainer.run(generator_index=i+1)
+                    print(
+                        f"\n********** Training Generator {i+1} of {n_generators} **********"
+                    )
+                    trainer = ZMuGANTrainer(generator_index=i + 1)
+                    trainer.run(generator_index=i + 1)
 
                 # Perform unlearning
                 print(f"\n********** Starting zMuGAN Unlearning **********")
                 unlearning_process = UnlearningProcess()
                 unlearning_process.load_pretrained_model()
                 unlearning_process.perform_unlearning()
-                
-                print("zMuGAN unlearning process completed successfully")
-                self.unlearned_model = self.weight_controller.load_model(self.unlearned_model_path, self.device)
 
-                
+                print("zMuGAN unlearning process completed successfully")
+                self.unlearned_model = self.weight_controller.load_model(
+                    self.unlearned_model_path, self.device
+                )
 
             elif self.unlearning_method == "emmn":
                 print("\n=== Starting EMMN Unlearning Process (Server-side) ===")
-                
+
                 # Call EMMN - it will load everything from config and model from disk
                 emmn_unlearning = EMMNUnlearning(device=self.device)
                 unlearned_model = emmn_unlearning.emmn_fit()
                 self.unlearned_model = unlearned_model
-                
+
                 print("EMMN unlearning completed successfully")
                 print("Unlearned model saved by EMMN")
-                
+
             elif self.unlearning_method == "lipschitz":
-                print(f"\n=== Lipschitz Unlearning Round {server_round} (Client-side) ===")
+                print(
+                    f"\n=== Lipschitz Unlearning Round {server_round} (Client-side) ==="
+                )
                 # For lipschitz, clients perform unlearning locally and return their results
                 # We continue with normal federated aggregation and track metrics for early stopping
                 self.lipschitz_round = server_round
-                self.info_tracker.update({
-                    "unlearning_round": server_round,
-                    "unlearning_method": self.unlearning_method,
-                    "lipschitz_round": self.lipschitz_round
-                })
-                
+                self.info_tracker.update(
+                    {
+                        "unlearning_round": server_round,
+                        "unlearning_method": self.unlearning_method,
+                        "lipschitz_round": self.lipschitz_round,
+                    }
+                )
+
                 # Save the aggregated parameters for lipschitz unlearning
                 # Create a model instance and load the aggregated weights
                 temp_model = ModelFactory.create_model().to(self.device)
                 aggregated_arrays = parameters_to_ndarrays(parameters_aggregated)
                 self.weight_controller.set_weights(temp_model, aggregated_arrays)
-                
+
                 # Save as proper PyTorch state_dict
                 torch.save(temp_model.state_dict(), self.unlearned_model_path)
                 self.unlearned_model = temp_model
-                
+
                 end_time = datetime.now()
                 time_difference = abs(end_time - start_time)
                 time_difference_in_seconds = time_difference.total_seconds()
                 self.info_tracker["weights_agg_time"] = time_difference_in_seconds
-                
+
                 return parameters_aggregated, self.info_tracker
-                
+
             else:
                 raise ValueError(f"Unknown unlearning method: {self.unlearning_method}")
-            
+
             # For zmugan and emmn: Load the unlearned model and use it as parameters
             parameters_aggregated = ndarrays_to_parameters(
                 [
@@ -409,16 +419,18 @@ class CustomStrategy(Strategy):
                 ]
             )
             # Update info tracker
-            self.info_tracker.update({
-                "unlearning_round": server_round,
-                "unlearning_method": self.unlearning_method
-            })
+            self.info_tracker.update(
+                {
+                    "unlearning_round": server_round,
+                    "unlearning_method": self.unlearning_method,
+                }
+            )
 
             end_time = datetime.now()
             time_difference = abs(end_time - start_time)
             time_difference_in_seconds = time_difference.total_seconds()
             self.info_tracker["unlearning_time"] = time_difference_in_seconds
-            
+
             # Verify the state change
             print(f"\n=== Completed {self.unlearning_method.upper()} unlearning ===")
 
@@ -453,7 +465,7 @@ class CustomStrategy(Strategy):
                 "train_loss": 0.0,
                 "train_acc": 0.0,
                 "val_loss": 0.0,
-                "val_acc": 0.0
+                "val_acc": 0.0,
             }
 
         if server_round == 1:  # Only log this warning once
@@ -481,12 +493,14 @@ class CustomStrategy(Strategy):
             return None, {}
         # Do not aggregate if there are failures and failures are not accepted
         if not self.accept_failures and failures:
-            return None, {}     
-    
-        
-        if self.training_status == "learning" or self.training_status == "scratch_training":
+            return None, {}
+
+        if (
+            self.training_status == "learning"
+            or self.training_status == "scratch_training"
+        ):
             start_time = datetime.now()
-        # Aggregate loss
+            # Aggregate loss
             results_aggregated = {}
             test_agg_loss = weighted_loss_avg(
                 [
@@ -515,8 +529,6 @@ class CustomStrategy(Strategy):
                 self.best_loss = test_agg_loss
                 self.best_weights = self.last_weights
                 self.loss_flag = 0
-
-
 
             else:
                 self.loss_flag += 1
@@ -551,27 +563,49 @@ class CustomStrategy(Strategy):
             self.info_tracker["avg_anamnesis_index"] = results_aggregated[
                 "anamnesis_index"
             ]
-            self.info_tracker["avg_original_forget_acc"] = results_aggregated["original_forget_acc"]
-            self.info_tracker["avg_original_retain_acc"] = results_aggregated["original_retain_acc"]
-            self.info_tracker["avg_original_accuracy"] = results_aggregated["original_accuracy"]
+            self.info_tracker["avg_original_forget_acc"] = results_aggregated[
+                "original_forget_acc"
+            ]
+            self.info_tracker["avg_original_retain_acc"] = results_aggregated[
+                "original_retain_acc"
+            ]
+            self.info_tracker["avg_original_accuracy"] = results_aggregated[
+                "original_accuracy"
+            ]
             self.info_tracker["unlearning_method_evaluated"] = self.unlearning_method
-            print(f"aggregated forget accuracy: {results_aggregated['forget_accuracy']}")
-            print(f"aggregated retain accuracy: {results_aggregated['retain_accuracy']}")
+            print(
+                f"aggregated forget accuracy: {results_aggregated['forget_accuracy']}"
+            )
+            print(
+                f"aggregated retain accuracy: {results_aggregated['retain_accuracy']}"
+            )
             print(f"aggregated mia: {results_aggregated['mia']}")
-            print(f"aggregated anamnesis index: {results_aggregated['anamnesis_index']}")
-            print(f"aggregated original forget accuracy: {results_aggregated['original_forget_acc']}")  
-            print(f"aggregated original retain accuracy: {results_aggregated['original_retain_acc']}")
-            print(f"aggregated original accuracy: {results_aggregated['original_accuracy']}")
-            
+            print(
+                f"aggregated anamnesis index: {results_aggregated['anamnesis_index']}"
+            )
+            print(
+                f"aggregated original forget accuracy: {results_aggregated['original_forget_acc']}"
+            )
+            print(
+                f"aggregated original retain accuracy: {results_aggregated['original_retain_acc']}"
+            )
+            print(
+                f"aggregated original accuracy: {results_aggregated['original_accuracy']}"
+            )
+
             # Handle lipschitz early stopping
             if self.unlearning_method == "lipschitz":
                 # Calculate the utility score
-                current_utility_score = results_aggregated["retain_accuracy"] + (100 - results_aggregated["forget_accuracy"])
+                current_utility_score = results_aggregated["retain_accuracy"] + (
+                    100 - results_aggregated["forget_accuracy"]
+                )
                 self.info_tracker["utility_score"] = current_utility_score
-                
-                print(f"Current utility score (retain_acc + (100-forget_acc)): {current_utility_score}")
+
+                print(
+                    f"Current utility score (retain_acc + (100-forget_acc)): {current_utility_score}"
+                )
                 print(f"Best utility score so far: {self.best_utility_score}")
-                
+
                 # Check if this is the best score
                 if current_utility_score > self.best_utility_score:
                     self.best_utility_score = current_utility_score
@@ -580,35 +614,53 @@ class CustomStrategy(Strategy):
                     print(f"NEW BEST utility score: {current_utility_score}")
                 else:
                     self.lipschitz_no_improvement_count += 1
-                    print(f"No improvement for {self.lipschitz_no_improvement_count} rounds")
-                
+                    print(
+                        f"No improvement for {self.lipschitz_no_improvement_count} rounds"
+                    )
+
                 self.info_tracker["best_utility_score"] = self.best_utility_score
-                self.info_tracker["lipschitz_no_improvement_count"] = self.lipschitz_no_improvement_count
-                
+                self.info_tracker[
+                    "lipschitz_no_improvement_count"
+                ] = self.lipschitz_no_improvement_count
+
                 # Check early stopping condition
-                if self.lipschitz_no_improvement_count >= self.lipschitz_max_no_improvement:
+                if (
+                    self.lipschitz_no_improvement_count
+                    >= self.lipschitz_max_no_improvement
+                ):
                     print(f"\n=== LIPSCHITZ EARLY STOPPING ===")
-                    print(f"No improvement for {self.lipschitz_max_no_improvement} rounds")
+                    print(
+                        f"No improvement for {self.lipschitz_max_no_improvement} rounds"
+                    )
                     print(f"Best utility score: {self.best_utility_score}")
                     print(f"Saving best lipschitz weights...")
-                    
+
                     # Save the best unlearned model
                     if self.best_lipschitz_weights is not None:
                         best_model = ModelFactory.create_model().to(self.device)
-                        self.weight_controller.set_weights(best_model, parameters_to_ndarrays(self.best_lipschitz_weights))
-                        
+                        self.weight_controller.set_weights(
+                            best_model,
+                            parameters_to_ndarrays(self.best_lipschitz_weights),
+                        )
+
                         # Save the best lipschitz model
                         torch.save(best_model.state_dict(), self.unlearned_model_path)
-                        print(f"Best Lipschitz model saved to: {self.unlearned_model_path}")
-                    
+                        print(
+                            f"Best Lipschitz model saved to: {self.unlearned_model_path}"
+                        )
+
                     self.save_results.save(self.info_tracker)
-                    raise Exception(f"Lipschitz unlearning completed at round {server_round} with early stopping")
-            
+                    raise Exception(
+                        f"Lipschitz unlearning completed at round {server_round} with early stopping"
+                    )
+
             self.save_results.save(self.info_tracker)
-            
+
             # For non-lipschitz methods, raise exception to complete unlearning
             if self.unlearning_method != "lipschitz":
-                raise Exception(f"learning and unlearning completed at round {server_round}")
+                raise Exception(
+                    f"learning and unlearning completed at round {server_round}"
+                )
 
         self.save_results.save(self.info_tracker)
 
@@ -626,10 +678,8 @@ class CustomStrategy(Strategy):
                     self.loss_flag = 0
                     self.return_best_weights = False
 
-                    
             else:
                 self.return_best_weights = True
                 self.best_loss = -1
-                
 
         return test_agg_loss, results_aggregated

@@ -83,16 +83,20 @@ class zMuGANDataGenerator:
         print(f"Generated Retain Dataset: {Dr_data.shape}, {Dr_labels.shape}")
 
         return (Df_data, Df_labels), (Dr_data, Dr_labels)
+
     def sample_kegnet_data(self, num_data, generators):
         """
         Sample artificial data using generator networks.
         """
         from torch.utils.data import DataLoader, TensorDataset
+
         ny = generators[0].num_classes
         nz = generators[0].num_noises
         noises = sample_noises(size=(num_data, nz))
-        labels_in = sample_labels(num_data, ny, dist='onehot')
-        loader = DataLoader(TensorDataset(noises, labels_in), batch_size=self.batch_size)
+        labels_in = sample_labels(num_data, ny, dist="onehot")
+        loader = DataLoader(
+            TensorDataset(noises, labels_in), batch_size=self.batch_size
+        )
 
         images_list = []
         for idx, generator in enumerate(generators):
@@ -103,4 +107,3 @@ class zMuGANDataGenerator:
                 l1.append(generator(y, z).detach())
             images_list.append(torch.cat(tuple(l1), dim=0))
         return torch.cat(tuple(images_list), dim=0)
-

@@ -86,7 +86,6 @@ class UnlearningProcess:
             f"[DEBUG] zMuGAN Unlearning process completed and model saved to {unlearned_model_path}."
         )
 
-   
     def _perform_zmugan_unlearning(self, unlearning_processor):
         print("[DEBUG] Loading pre-trained zMuGAN model...")
         # calculate samples per generator
@@ -128,11 +127,11 @@ class UnlearningProcess:
             self.device,
             self.original_model,
         )
-        
+
         generated_images = data_gen.sample_kegnet_data(
             self.unlearning_configs["SAMPLES_PER_CLASS"],
             generators,
-        )   
+        )
         labels = self.predict_labels(
             self.original_model,
             generated_images,
@@ -186,14 +185,16 @@ class UnlearningProcess:
             self.unlearning_configs["BATCH_SIZE_UNLEARN"],
         )
         print("[DEBUG] DataLoaders created. Starting unlearning processor...")
-        self.unlearned_model = unlearning_processor.our_method(forget_data_loader, retain_data_loader)
+        self.unlearned_model = unlearning_processor.our_method(
+            forget_data_loader, retain_data_loader
+        )
         print("[DEBUG] zMuGAN unlearning process completed.")
 
     def predict_labels(self, model, sampled_data, bs):
         """
         Predict the labels of sampled data.
         """
-        
+
         print("[DEBUG] Predicting labels...")
         model.eval()
         softmax = nn.Softmax(dim=1)

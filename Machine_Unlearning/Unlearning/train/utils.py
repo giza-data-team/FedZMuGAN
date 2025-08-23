@@ -27,11 +27,15 @@ def predict_classes(model, data, device, batch_size=256):
     predicted_classes = []
     with torch.no_grad():
         for i in range(0, len(data), batch_size):
-            batch = data[i:i+batch_size].to(device)
+            batch = data[i : i + batch_size].to(device)
             outputs = model(batch)
             preds = torch.argmax(outputs, dim=1)
             predicted_classes.append(preds)
-    return torch.cat(predicted_classes) if predicted_classes else torch.tensor([], device=device)
+    return (
+        torch.cat(predicted_classes)
+        if predicted_classes
+        else torch.tensor([], device=device)
+    )
 
 
 def filter_by_prediction(model, data, labels, target_class, device, batch_size=256):

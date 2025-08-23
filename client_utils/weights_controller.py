@@ -26,7 +26,7 @@ class WeightsController:
         state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
         net.load_state_dict(state_dict, strict=True)
 
-    def save_weights(self, model_pram, model_id, dataset_name, file_path = None):
+    def save_weights(self, model_pram, model_id, dataset_name, file_path=None):
         """Save weights with model ID identifier"""
         if file_path is None:
             filename = f"{dataset_name}_{model_id}.pth"

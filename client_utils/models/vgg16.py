@@ -4,17 +4,60 @@ import torch.nn.functional as F
 from .base_model import BaseModel
 
 cfg = {
-    'VGG11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
-    'VGG13': [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
-    'VGG16': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
-    'VGG19': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512, 'M'],
+    "VGG11": [64, "M", 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
+    "VGG13": [64, 64, "M", 128, 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
+    "VGG16": [
+        64,
+        64,
+        "M",
+        128,
+        128,
+        "M",
+        256,
+        256,
+        256,
+        "M",
+        512,
+        512,
+        512,
+        "M",
+        512,
+        512,
+        512,
+        "M",
+    ],
+    "VGG19": [
+        64,
+        64,
+        "M",
+        128,
+        128,
+        "M",
+        256,
+        256,
+        256,
+        256,
+        "M",
+        512,
+        512,
+        512,
+        512,
+        "M",
+        512,
+        512,
+        512,
+        512,
+        "M",
+    ],
 }
 
 
 class VGG(BaseModel):
     def __init__(self, vgg_name, return_activations=False, dropout_rate=0.5):
         super(VGG, self).__init__()
-        self.features = self._make_layers(cfg[vgg_name], channels=self.dataset_config["img_channels"])
+        self.features = self._make_layers(
+            cfg[vgg_name], channels=self.dataset_config["img_channels"]
+        )
         self.dropout = nn.Dropout(dropout_rate)
 
         # Use adaptive pooling to handle any input size
@@ -25,7 +68,7 @@ class VGG(BaseModel):
             nn.Linear(512, 512),
             nn.ReLU(True),
             nn.Dropout(dropout_rate),
-            nn.Linear(512, self.dataset_config["num_classes"])
+            nn.Linear(512, self.dataset_config["num_classes"]),
         )
         self.return_activations = return_activations
 
@@ -61,17 +104,19 @@ class VGG(BaseModel):
         layers = []
         in_channels = channels
         for x in cfg:
-            if x == 'M':
+            if x == "M":
                 layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
             else:
                 layers += [
                     nn.Conv2d(in_channels, x, kernel_size=3, padding=1),
                     nn.BatchNorm2d(x),
-                    nn.ReLU(inplace=True)
+                    nn.ReLU(inplace=True),
                 ]
                 # Add dropout after some conv layers (not after every layer to preserve features)
                 if x >= 256:  # Add dropout after layers with larger feature maps
-                    layers += [nn.Dropout2d(0.2)]  # Spatial dropout for convolutional layers
+                    layers += [
+                        nn.Dropout2d(0.2)
+                    ]  # Spatial dropout for convolutional layers
                 in_channels = x
         # Remove the last AvgPool layer - we'll use adaptive pooling instead
         return nn.Sequential(*layers)
@@ -79,8 +124,17 @@ class VGG(BaseModel):
 
 class VGG16(VGG):
     def __init__(self, return_activations=False, dropout_rate=0.5):
-        super(VGG16, self).__init__(vgg_name='VGG16', return_activations=return_activations, dropout_rate=dropout_rate)
+        super(VGG16, self).__init__(
+            vgg_name="VGG16",
+            return_activations=return_activations,
+            dropout_rate=dropout_rate,
+        )
+
 
 class VGG13(VGG):
     def __init__(self, return_activations=False, dropout_rate=0.5):
-        super(VGG13, self).__init__(vgg_name='VGG13', return_activations=return_activations, dropout_rate=dropout_rate)
+        super(VGG13, self).__init__(
+            vgg_name="VGG13",
+            return_activations=return_activations,
+            dropout_rate=dropout_rate,
+        )

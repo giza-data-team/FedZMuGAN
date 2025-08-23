@@ -17,6 +17,7 @@ from client_utils.general_utils import set_seed
 
 set_seed()
 
+
 def sample_noises(size):
     """
     Sample noise vectors (z).
@@ -28,12 +29,12 @@ def sample_labels(num_data, num_classes, dist):
     """
     Sample label vectors (y).
     """
-    if dist == 'onehot':
+    if dist == "onehot":
         init_labels = np.random.randint(0, num_classes, num_data)
         labels = np.zeros((num_data, num_classes), dtype=int)
         labels[np.arange(num_data), init_labels] = 1
         return torch.tensor(labels, dtype=torch.float32)
-    elif dist == 'uniform':
+    elif dist == "uniform":
         labels = np.random.uniform(size=(num_data, num_classes))
         return torch.tensor(labels, dtype=torch.float32)
     else:

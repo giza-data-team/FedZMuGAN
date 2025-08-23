@@ -56,7 +56,9 @@ class ValidateData:
         }
         target_class_accuracy = class_accuracy.pop(target_class, 0.0)
         other_classes_accuracy = (
-            sum(class_accuracy.values()) / len(class_accuracy) if class_accuracy else 0.0
+            sum(class_accuracy.values()) / len(class_accuracy)
+            if class_accuracy
+            else 0.0
         )
         metrics = accuracy
         if compute_separate:

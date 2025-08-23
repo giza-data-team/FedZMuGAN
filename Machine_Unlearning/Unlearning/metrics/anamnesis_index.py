@@ -5,6 +5,7 @@ from client_utils.general_utils import set_seed
 
 set_seed()
 
+
 def relearn_time(
     model,
     train_loader,
@@ -17,7 +18,7 @@ def relearn_time(
     """
     Return the number of training steps needed for the model to reach an accuracy within
     alpha% of its original accuracy on the forget test data.
-    
+
     Uses the same optimizer, scheduler, and loss function as defined in ModelTrainer.
     """
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -49,19 +50,25 @@ def relearn_time(
             correct, total = 0, 0
             with torch.no_grad():
                 for val_inputs, val_labels in forget_val_loader:
-                    val_inputs, val_labels = val_inputs.to(device), val_labels.to(device)
+                    val_inputs, val_labels = val_inputs.to(device), val_labels.to(
+                        device
+                    )
                     val_outputs = model(val_inputs)
                     _, predicted = torch.max(val_outputs, 1)
                     correct += (predicted == val_labels).sum().item()
                     total += val_labels.size(0)
-            
-            accuracy = (correct / total) * 100 
-            
-            if steps>0 and steps%10 == 0:
-                print(f"[Step {steps}] Training Loss: {loss.item():.4f} Forget Val Accuracy: {accuracy:.2f}%")
+
+            accuracy = (correct / total) * 100
+
+            if steps > 0 and steps % 10 == 0:
+                print(
+                    f"[Step {steps}] Training Loss: {loss.item():.4f} Forget Val Accuracy: {accuracy:.2f}%"
+                )
 
             if accuracy >= target_accuracy_min:
-                print(f"[Step {steps}] Relearn threshold reached with accuracy: {accuracy:.2f}%")
+                print(
+                    f"[Step {steps}] Relearn threshold reached with accuracy: {accuracy:.2f}%"
+                )
                 return steps
 
     print(f"Reached max epochs without achieving target accuracy.")
@@ -87,7 +94,6 @@ def anamnesis_index(
 
     print(f"Original Model Accuracy: {original_accuracy:.2f}%")
     print(f"Minimum Target Accuracy: {target_accuracy_min:.2f}%")
-
 
     print("\nCalculating relearn time for the unlearned model...")
     rt_u = relearn_time(

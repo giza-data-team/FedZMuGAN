@@ -4,20 +4,15 @@ import torch.nn as nn
 from config_manager import ConfigurationManager
 from client_utils.general_utils import set_seed
 
+
 class ModelTrainer:
-    def __init__(
-        self,
-        model,
-        train_loader,
-        val_loader,
-        device
-    ):
+    def __init__(self, model, train_loader, val_loader, device):
         """
         Initializes the model trainer with the given parameters.
         """
         # Set seeds for reproducibility
         set_seed()
-        
+
         self.config = ConfigurationManager()
         self.model = model.to(device)
         self.train_loader = train_loader
@@ -25,7 +20,7 @@ class ModelTrainer:
         self.num_epochs = self.config.get_epochs_original()
         self.device = device
         self.criterion = nn.CrossEntropyLoss()
-        
+
         # Create optimizer with deterministic settings
         self.optimizer = optim.SGD(
             self.model.parameters(),
@@ -33,22 +28,21 @@ class ModelTrainer:
             momentum=self.config.get_optim_momentum(),
             weight_decay=self.config.get_optim_weight_decay_original(),
         )
-        
+
         # Create scheduler with deterministic settings
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            self.optimizer, 
-            T_max=self.config.get_scheduler_t_max()
+            self.optimizer, T_max=self.config.get_scheduler_t_max()
         )
         self.patience = self.config.get_patience()
 
-    def train(self,model):
+    def train(self, model):
         """
         Train the model and validate at the end of each epoch.
         """
         total_train_loss, total_val_loss = 0, 0
         total_train_accuracy, total_val_accuracy = 0, 0
         best_val_loss = 1e6  # Initialize best validation loss with a large number
-        best_val_acc, best_train_loss, best_train_acc = 0,0,0
+        best_val_acc, best_train_loss, best_train_acc = 0, 0, 0
         patience_counter = 0  # Counter for early stopping
         self.model = model
         self.best_model_state = None

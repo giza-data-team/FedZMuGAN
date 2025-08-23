@@ -14,7 +14,7 @@ def prepare_forget_retain_dataloaders(dataset, batch_size, forget_class, dataset
         full_dataset = dataset.get_test_dataset()
     else:
         raise ValueError("dataset_type must be 'train', 'validate', or 'test'.")
-    
+
     shuffle = True if dataset_type == "train" else False
 
     forget_indices = [

@@ -46,14 +46,13 @@ def multi_weighted_avg(
     for count_key, metric_key in metric_pairs:
         # Filter results that have both keys
         valid_results = [
-            result for result in results 
-            if count_key in result and metric_key in result
+            result for result in results if count_key in result and metric_key in result
         ]
-        
+
         if not valid_results:
             aggregated[metric_key] = 0.0
             continue
-            
+
         total_count = sum(result[count_key] for result in valid_results)
         weighted_sum = sum(
             result[count_key] * result[metric_key] for result in valid_results

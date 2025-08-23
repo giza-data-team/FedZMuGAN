@@ -7,7 +7,7 @@ class EarlyStopping:
         """
         self.patience = patience
         self.min_delta = min_delta
-        self.best_loss = float('inf')  
+        self.best_loss = float("inf")
         self.counter = 0
         self.early_stop = False
         self.save_weights = False
@@ -19,13 +19,13 @@ class EarlyStopping:
         if val_loss < self.best_loss - self.min_delta:
             self.best_loss = val_loss
             self.save_weights = True
-            self.counter = 0  
+            self.counter = 0
         else:
-            self.counter += 1  
-            print(f"EarlyStopping counter: {self.counter} / {self.patience}")  
+            self.counter += 1
+            print(f"EarlyStopping counter: {self.counter} / {self.patience}")
 
             if self.counter >= self.patience:
-                self.early_stop = True  
-                return True  
+                self.early_stop = True
+                return True
 
         return False
