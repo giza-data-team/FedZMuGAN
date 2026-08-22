@@ -276,9 +276,12 @@ class FlowerClient(fl.client.Client):
             end_time = datetime.now()
 
             # Get the correct unlearned model path based on unlearning method
+            forget_tag = self.config_manager.forget_class_tag(
+                self.config_manager.get_forget_classes()
+            )
             unlearned_model_path = os.path.join(
                 self.config_manager.get_models_path_unlearn(),
-                f"unlearned_{self.model_name}_{self.dataset_name}_forget_class_{self.config_manager.get_forget_class()}_{unlearning_method}.pth",
+                f"unlearned_{self.model_name}_{self.dataset_name}_forget_class_{forget_tag}_{unlearning_method}.pth",
             )
 
             # Use the same evaluation approach for all methods
@@ -403,7 +406,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     config_manager = ConfigurationManager()
     client_id = args.client_id  # No need for int conversion since we specified type=int
-    target_class = config_manager.get_forget_class()
+    target_class = config_manager.get_forget_classes()
     n_epochs = config_manager.get_epochs_original()
     port = config_manager.get_port()
     homogeneous = config_manager.get_homogeneous()

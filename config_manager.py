@@ -95,6 +95,22 @@ class ConfigurationManager:
     def get_optim_weight_decay_original(self):
         return float(os.getenv("OPTIM_WEIGHT_DECAY_ORIGINAL", 5e-4))
 
+    def get_use_outlier_exposure(self):
+        """
+        Opt-in (default off, so CIFAR10/MNIST/SVHN etc. are unaffected). Trains
+        the original classifier to output a near-uniform distribution on random
+        noise batches, instead of leaving out-of-distribution behavior
+        undefined. Fixes classifiers with severe OOD confidence collapse
+        (e.g. MobileNetV2/EuroSAT, ResNet18/VGGFace2 - confirmed via direct
+        testing to assign ~100% of random noise to a single class), which
+        zMuGAN's generator otherwise learns to exploit instead of true
+        class-conditional generation.
+        """
+        return self._str_to_bool(os.getenv("USE_OUTLIER_EXPOSURE", "False"))
+
+    def get_outlier_exposure_weight(self):
+        return float(os.getenv("OUTLIER_EXPOSURE_WEIGHT", 0.5))
+
     def get_optim_momentum(self):
         return float(os.getenv("OPTIM_MOMENTUM_ORIGINAL", 0.9))
 
@@ -166,6 +182,21 @@ class ConfigurationManager:
     # =============================
     def get_forget_class(self):
         return int(os.getenv("FORGET_CLASS", 5))
+
+    def get_forget_classes(self):
+        """
+        Parses FORGET_CLASS as a comma-separated list of ints, e.g.
+        "5" -> [5], "0,1,2" -> [0, 1, 2]. Supports single- and multi-class forgetting.
+        """
+        raw = str(os.getenv("FORGET_CLASS", "5"))
+        return [int(c.strip()) for c in raw.split(",") if c.strip() != ""]
+
+    @staticmethod
+    def forget_class_tag(classes):
+        """Filename-safe tag for one or more forget classes, e.g. [5] -> "5", [0,1,2] -> "0-1-2"."""
+        if not isinstance(classes, (list, tuple, set)):
+            classes = [classes]
+        return "-".join(str(c) for c in classes)
 
     def get_samples_per_class(self):
         return int(os.getenv("SAMPLES_PER_CLASS", 2000))
@@ -278,6 +309,7 @@ class ConfigurationManager:
     def get_all_unlearning_configs(self):
         return {
             "forget_class": self.get_forget_class(),
+            "forget_classes": self.get_forget_classes(),
             "samples_per_class": self.get_samples_per_class(),
             "lr_unlearn": self.get_lr_unlearn(),
             "epochs_unlearn": self.get_epochs_unlearn(),
@@ -325,6 +357,7 @@ class ConfigurationManager:
     def get_unlearning_configs(self):
         return {
             "FORGET_CLASS": self.get_forget_class(),
+            "FORGET_CLASSES": self.get_forget_classes(),
             "SAMPLES_PER_CLASS": self.get_samples_per_class(),
             "LR_UNLEARN": self.get_lr_unlearn(),
             "BATCH_SIZE_UNLEARN": self.get_batch_size_unlearn(),
